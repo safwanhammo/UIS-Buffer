@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Warehouse Inventory Checker</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    body {
+      background: linear-gradient(to right, #e0e7ff, #a5e4ff);
+      font-family: 'Segoe UI', sans-serif;
+    }
+    h1.logo {
+      font-size: 3rem;
+      text-align: center;
+      margin-top: 20px;
+      font-weight: bold;
+      color: #048fda;
+    }
+    hr.separator {
+      border-top: 3px solid #0086a4;
+      margin: 30px 0;
+    }
+    .table-section {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+    }
+    .btn {
+      min-width: 40px;
+    }
+    .copy-output {
+      white-space: pre-line;
+      background: #f1f1f1;
+      padding: 10px;
+      margin-top: 20px;
+      border-left: 4px solid #4d4fd6;
+    }
+    .copied-msg {
+      display: none;
+      color: rgb(1, 192, 255);
+      margin-top: 10px;
+      font-weight: bold;
+      animation: fadeInOut 2s ease-in-out;
+    }
+    @keyframes fadeInOut {
+      0% { opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <h1 class="logo">UIS Buffer</h1>
+
+  <div class="container">
+    <form id="inventoryForm">
+      <div class="row">
+        <div class="col-md-4">
+          <label>Department</label>
+          <select class="form-control" id="section">
+            <option>UIS</option>
+           
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label>Time</label>
+          <select class="form-control" id="time">
+            <option>SOS</option>
+            <option>EOS</option>
+            <option>ATB</option>
+            <option>Update</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label>Shift</label>
+         <select class="form-control" id="shift">
+            <option>S1</option>
+            
+          </select>
+        </div>
+      </div>
+
+      <hr class="separator">
+
+      <div class="table-section">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Count</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="itemsTable">
+            <!-- Filled by JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="text-center mt-4">
+        <button type="button" class="btn btn-primary" onclick="copySettings()">Copy Settings</button>
+        <div class="copied-msg" id="copiedMsg">Copied to clipboard!</div>
+      </div>
+
+      <div class="copy-output" id="output"></div>
+    </form>
+  </div>
+
+  <audio id="copySound" src="https://www.soundjay.com/buttons/sounds/beep-23.mp3" preload="auto"></audio>
+
+  <script>
+    const items = [
+      'UIS','Manuel Sort','Unplanned Prep','Single Outbound Case','Single Outbound Totes','Problem Solve','Ticket','Damage','Transship','Mix','Receive','Decant','Libraries','ATAC','Hazmat'
+    ];
+
+    const table = document.getElementById("itemsTable");
+
+    items.forEach(item => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${item}</td>
+        <td><input type="number" step="0.5" value="0" min="0" class="form-control count"></td>
+        <td>
+          <button type="button" class="btn btn-success" onclick="adjustCount(this, 0.5)">+</button>
+          <button type="button" class="btn btn-danger" onclick="adjustCount(this, -0.5)">-</button>
+        </td>
+      `;
+      table.appendChild(row);
+    });
+
+    function adjustCount(button, value) {
+      const input = button.closest("tr").querySelector(".count");
+      let current = parseFloat(input.value);
+      current = Math.max(0, current + value);
+      input.value = current;
+    }
+
+    function copySettings() {
+      const section = document.getElementById("section").value;
+      const time = document.getElementById("time").value;
+      const shift = document.getElementById("shift").value;
+      const rows = document.querySelectorAll("#itemsTable tr");
+      let summary = `Section: ${section}\nTime: ${time}\nShift: ${shift}\n---------------------------`;
+      let total = 0;
+
+      rows.forEach(row => {
+        const name = row.children[0].textContent;
+        const val = parseFloat(row.querySelector(".count").value);
+        if (val >= 0.5) {
+          summary += `\n${name}: ${val}`;
+          total += val;
+        }
+      });
+
+      summary += `\n---------------------------\nTotal: ${total}`;
+      document.getElementById("output").textContent = summary;
+
+      // Copy to clipboard
+      navigator.clipboard.writeText(summary).then(() => {
+        const msg = document.getElementById("copiedMsg");
+        msg.style.display = "block";
+        msg.style.animation = "fadeInOut 2s ease-in-out";
+        setTimeout(() => msg.style.display = "none", 2000);
+        document.getElementById("copySound").play();
+      }).catch(err => alert("Failed to copy text: " + err));
+    }
+  </script>
+</body>
+</html>
